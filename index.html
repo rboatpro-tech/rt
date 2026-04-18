@@ -25,61 +25,44 @@
         #auth-screen input { padding: 12px; margin: 10px; border: 1px solid #ddd; border-radius: 8px; width: 260px; font-size: 16px; outline: none; }
         #auth-screen button { background: #517da2; color: white; border: none; padding: 12px 40px; border-radius: 20px; font-weight: bold; cursor: pointer; }
 
-        /* ОСНОВНОЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ */
+        /* ГЛАВНЫЙ КОНТЕЙНЕР */
         #app-container { display: none; flex-direction: column; height: 100vh; width: 100%; }
 
-        /* ШАПКА */
         header { 
-            background: #517da2; 
-            color: white; 
-            padding: 15px; 
-            text-align: center; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
-            font-size: 18px; 
-            font-weight: 500;
+            background: #517da2; color: white; padding: 15px; text-align: center; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2); font-size: 18px; font-weight: 500;
         }
 
         /* ЭКРАНЫ */
-        .screen { flex: 1; display: none; flex-direction: column; overflow-y: auto; padding-bottom: 70px; }
+        .screen { flex: 1; display: none; flex-direction: column; overflow-y: auto; padding-bottom: 80px; }
         #chat-screen { display: flex; }
 
         #messages { flex: 1; padding: 15px; display: flex; flex-direction: column; }
-        .msg { max-width: 80%; margin-bottom: 10px; padding: 8px 12px; border-radius: 12px; font-size: 15px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; position: relative; }
+        .msg { max-width: 80%; margin-bottom: 10px; padding: 8px 12px; border-radius: 12px; font-size: 15px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
         .others { background: white; align-self: flex-start; border-bottom-left-radius: 2px; }
         .my { background: #efffde; align-self: flex-end; border-bottom-right-radius: 2px; }
         .u-name { display: block; font-weight: bold; color: #389ed6; font-size: 12px; margin-bottom: 3px; }
 
-        /* ПАНЕЛЬ ВВОДА */
+        /* КОНТАКТЫ */
+        .contact-card { background: white; margin: 5px 10px; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .contact-info strong { display: block; color: #333; }
+        .contact-info span { color: #888; font-size: 13px; }
+
+        /* ВВОД СООБЩЕНИЯ */
         .input-area { background: white; padding: 10px; display: flex; align-items: center; gap: 10px; border-top: 1px solid #ddd; }
         #msgInput { flex: 1; border: 1px solid #ddd; border-radius: 20px; padding: 10px 15px; outline: none; font-size: 16px; }
 
-        /* НИЖНЯЯ НАВИГАЦИЯ */
+        /* НАВИГАЦИЯ */
         nav {
-            background: #ffffff;
-            height: 65px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 1px solid #ccc;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+            background: #ffffff; height: 65px; display: flex; justify-content: space-around;
+            align-items: center; border-top: 1px solid #ccc; position: fixed; bottom: 0; width: 100%;
             padding-bottom: env(safe-area-inset-bottom);
         }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #707579;
-            text-decoration: none;
-            font-size: 11px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #707579; font-size: 11px; cursor: pointer; }
         .nav-item.active { color: #248bcf; }
         .nav-icon { font-size: 22px; margin-bottom: 4px; }
 
-        .placeholder { text-align: center; margin-top: 50px; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .placeholder { text-align: center; margin-top: 50px; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); padding: 20px; }
     </style>
 </head>
 <body>
@@ -103,32 +86,32 @@
         </div>
 
         <div id="contacts-screen" class="screen">
-            <div class="placeholder">
-                <h3>Контакты</h3>
-                <p>Ваши контакты Safari появятся здесь</p>
+            <div style="padding: 15px;">
+                <button onclick="importContacts()" style="width:100%; background:#248bcf; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;">
+                    📥 Подтянуть из телефона
+                </button>
+            </div>
+            <div id="contacts-list">
+                <div class="placeholder">Здесь появятся ваши контакты</div>
             </div>
         </div>
 
         <div id="profile-screen" class="screen">
             <div class="placeholder">
-                <h3>Мой профиль</h3>
-                <p id="profile-name-display"></p>
-                <button onclick="location.reload()" style="background:#e53935; color:white; border:none; padding:12px 25px; border-radius:15px; font-weight:bold;">Выход</button>
+                <h3 id="profile-name-display"></h3>
+                <button onclick="location.reload()" style="background:#e53935; color:white; border:none; padding:12px 25px; border-radius:15px; font-weight:bold; cursor:pointer; margin-top:20px;">Выход</button>
             </div>
         </div>
 
         <nav>
             <div class="nav-item active" onclick="showScreen('chat-screen', this)">
-                <span class="nav-icon">💬</span>
-                <span>Чаты</span>
+                <span class="nav-icon">💬</span><span>Чаты</span>
             </div>
             <div class="nav-item" onclick="showScreen('contacts-screen', this)">
-                <span class="nav-icon">👤</span>
-                <span>Контакты</span>
+                <span class="nav-icon">👤</span><span>Контакты</span>
             </div>
             <div class="nav-item" onclick="showScreen('profile-screen', this)">
-                <span class="nav-icon">⚙️</span>
-                <span>Настройки</span>
+                <span class="nav-icon">⚙️</span><span>Настройки</span>
             </div>
         </nav>
     </div>
@@ -144,8 +127,6 @@
             document.getElementById(screenId).style.display = 'flex';
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             element.classList.add('active');
-            
-            // Если переходим не в чат, можно менять заголовок
             const titles = {'chat-screen': currentRoom, 'contacts-screen': 'Контакты', 'profile-screen': 'Настройки'};
             document.getElementById('roomTitle').innerText = titles[screenId];
         }
@@ -164,16 +145,42 @@
             }
         }
 
+        // ФУНКЦИЯ ИМПОРТА КОНТАКТОВ
+        async function importContacts() {
+            const props = ['name', 'tel'];
+            const opts = { multiple: true };
+            try {
+                if ('contacts' in navigator && 'ContactsManager' in window) {
+                    const contacts = await navigator.contacts.select(props, opts);
+                    const list = document.getElementById('contacts-list');
+                    list.innerHTML = ""; // Очистить плейсхолдер
+                    contacts.forEach(c => {
+                        const card = document.createElement('div');
+                        card.className = 'contact-card';
+                        card.innerHTML = `
+                            <div class="contact-info">
+                                <strong>${c.name}</strong>
+                                <span>${c.tel[0]}</span>
+                            </div>
+                            <button onclick="alert('Приглашение отправлено!')" style="background:#517da2; color:white; border:none; padding:5px 10px; border-radius:5px;">Пригласить</button>
+                        `;
+                        list.appendChild(card);
+                    });
+                } else {
+                    alert("Ваш браузер или ОС не поддерживают выбор контактов. Попробуйте в Chrome на Android.");
+                }
+            } catch (err) { console.log("Импорт отменен"); }
+        }
+
         function displayMessage(msg) {
-            const messagesDiv = document.getElementById('messages');
-            if (!messagesDiv) return;
+            const mDiv = document.getElementById('messages');
+            if (!mDiv) return;
             const div = document.createElement('div');
             const isMy = msg.user === currentUser;
             div.className = `msg ${isMy ? 'my' : 'others'}`;
-            const nameHtml = !isMy ? `<span class="u-name">${msg.user}</span>` : "";
-            div.innerHTML = `${nameHtml}${msg.text}`;
-            messagesDiv.appendChild(div);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            div.innerHTML = `${!isMy ? '<span class="u-name">'+msg.user+'</span>' : ''}${msg.text}`;
+            mDiv.appendChild(div);
+            mDiv.scrollTop = mDiv.scrollHeight;
         }
 
         function sendMessage() {
@@ -187,17 +194,11 @@
         socket.on('chat message', (msg) => displayMessage(msg));
         socket.on('chat history', (history) => {
             const mDiv = document.getElementById('messages');
-            if (mDiv) {
-                mDiv.innerHTML = '';
-                history.forEach(msg => displayMessage(msg));
-            }
+            if (mDiv) { mDiv.innerHTML = ''; history.forEach(msg => displayMessage(msg)); }
         });
 
         document.getElementById('msgInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-        
-        socket.on('connect', () => {
-            if (currentUser && currentRoom) socket.emit('join room', { user: currentUser, room: currentRoom });
-        });
+        socket.on('connect', () => { if (currentUser && currentRoom) socket.emit('join room', { user: currentUser, room: currentRoom }); });
     </script>
 </body>
 </html>
