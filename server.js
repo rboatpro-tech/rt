@@ -5,7 +5,7 @@ const io = require('socket.io')(http, {
     maxHttpBufferSize: 1e7 // 10 Мб лимит
 });
 const mongoose = require('mongoose');
-const path = require('path'); // Модуль для работы с путями
+const path = require('path'); 
 
 // 1. Подключение к MongoDB
 const mongoURI = process.env.MONGODB_URI;
@@ -23,22 +23,21 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// --- ИСПРАВЛЕНИЕ ТУТ ---
-// Настройка статики (указываем путь к папке www)
-app.use(express.static(path.join(__dirname, 'www')));
+// --- ИСПРАВЛЕННЫЙ БЛОК (БЕЗ ПАПКИ WWW) ---
+// Указываем, что статические файлы (логотип, картинки) лежат в корне
+app.use(express.static(__dirname));
 
-// Принудительно отдаем index.html при заходе на главную страницу
+// Принудительно отдаем index.html из корня
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'www', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
-// -----------------------
+// ----------------------------------------
 
 // 3. Логика Socket.io
 io.on('connection', (socket) => {
     console.log('Новое подключение к Алмазу');
 
     socket.on('join room', async (data) => {
-        // Выходим из всех комнат кроме личной
         socket.rooms.forEach(room => {
             if (room !== socket.id) socket.leave(room);
         });
