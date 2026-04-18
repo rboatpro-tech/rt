@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Приложение Алмаз</title>
+    
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="apple-mobile-web-app-title" content="Алмаз">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         
         /* Окно входа */
         #auth-screen { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
@@ -12,7 +20,13 @@
         #auth-screen button { background: #0084ff; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         /* Окно чата */
-        #chat-screen { display: none; background: white; width: 500px; height: 700px; flex-direction: column; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        #chat-screen { display: none; background: white; width: 100%; max-width: 500px; height: 100%; max-height: 700px; flex-direction: column; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        /* Адаптация под мобильные устройства */
+        @media (max-width: 600px) {
+            #chat-screen { border-radius: 0; max-height: 100vh; }
+        }
+
         #messages { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: #f9f9f9; }
         
         .msg-container { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 5px; }
@@ -21,7 +35,7 @@
         .user-name { font-weight: bold; font-size: 0.8em; color: #555; margin-bottom: 4px; display: block; }
         .msg-content img { max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; }
 
-        .input-area { padding: 20px; display: flex; gap: 10px; background: white; border-top: 1px solid #eee; align-items: center; }
+        .input-area { padding: 15px; display: flex; gap: 10px; background: white; border-top: 1px solid #eee; align-items: center; }
         .input-area input[type="text"] { flex-grow: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; outline: none; }
         #fileInput { display: none; }
     </style>
@@ -46,7 +60,6 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // АВТО-ПОДКЛЮЧЕНИЕ: теперь работает и дома, и на Render автоматически
         const socket = io(); 
         let currentUser = "";
 
@@ -56,13 +69,11 @@
                 currentUser = name;
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('chat-screen').style.display = 'flex';
-                // Скролл вниз при входе
                 const messagesDiv = document.getElementById('messages');
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }
         }
 
-        // Функция отрисовки сообщений (вынесена отдельно для удобства)
         function displayMessage(msg) {
             const messagesDiv = document.getElementById('messages');
             const container = document.createElement('div');
@@ -83,13 +94,11 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // ПОЛУЧЕНИЕ ИСТОРИИ ИЗ БАЗЫ
         socket.on('chat history', (history) => {
-            document.getElementById('messages').innerHTML = ''; // Чистим перед загрузкой
+            document.getElementById('messages').innerHTML = ''; 
             history.forEach(msg => displayMessage(msg));
         });
 
-        // ПОЛУЧЕНИЕ НОВОГО СООБЩЕНИЯ
         socket.on('chat message', (msg) => {
             displayMessage(msg);
         });
@@ -98,7 +107,6 @@
             const input = document.getElementById('msgInput');
             const fileInput = document.getElementById('fileInput');
 
-            // Отправка текста
             if (input.value.trim()) {
                 socket.emit('chat message', { 
                     user: currentUser, 
@@ -107,7 +115,6 @@
                 input.value = '';
             }
 
-            // Отправка картинки
             if (fileInput.files.length > 0) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -121,7 +128,6 @@
             }
         }
 
-        // Отправка по нажатию Enter
         document.getElementById('msgInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') sendMessage();
         });
