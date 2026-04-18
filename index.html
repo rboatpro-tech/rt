@@ -2,144 +2,96 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Приложение Алмаз</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Алмаз</title>
     
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
-    <meta name="apple-mobile-web-app-title" content="Алмаз">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #auth-screen { background: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 280px; }
+        #auth-screen input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        #auth-screen button { width: 100%; padding: 12px; background: #0084ff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        /* Окно входа */
-        #auth-screen { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        #auth-screen h2 { margin-top: 0; color: #333; }
-        #auth-screen input { padding: 12px; width: 250px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; display: block; font-size: 16px; }
-        #auth-screen button { background: #0084ff; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
-
-        /* Окно чата */
-        #chat-screen { display: none; background: white; width: 100%; max-width: 500px; height: 100%; max-height: 700px; flex-direction: column; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        #chat-screen { display: none; background: white; width: 100%; max-width: 500px; height: 100%; flex-direction: column; }
+        #messages { flex-grow: 1; overflow-y: auto; padding: 15px; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
+        .msg { background: white; padding: 8px 12px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 80%; }
+        .u-name { font-weight: bold; font-size: 0.7em; color: #0084ff; display: block; }
         
-        @media (max-width: 600px) {
-            #chat-screen { border-radius: 0; max-height: 100vh; }
-        }
-
-        #messages { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: #f9f9f9; }
-        
-        .msg-container { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 5px; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; }
-        .msg-content { background: white; padding: 10px 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); max-width: 70%; word-wrap: break-word; }
-        .user-name { font-weight: bold; font-size: 0.8em; color: #555; margin-bottom: 4px; display: block; }
-        .msg-content img { max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; }
-
-        .input-area { padding: 15px; display: flex; gap: 10px; background: white; border-top: 1px solid #eee; align-items: center; }
-        .input-area input[type="text"] { flex-grow: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-size: 16px; }
-        #fileInput { display: none; }
+        .input-area { padding: 10px; display: flex; gap: 10px; border-top: 1px solid #eee; }
+        .input-area input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
-        <h2>Алмаз</h2>
-        <input type="text" id="userNameInput" placeholder="Ваше имя...">
-        <input type="text" id="roomNameInput" placeholder="Название группы...">
-        <button onclick="login()">Войти в группу</button>
+        <h3>Вход в Алмаз</h3>
+        <input type="text" id="userNameInput" placeholder="Ваше имя">
+        <input type="text" id="roomNameInput" placeholder="Группа (Работа, Семья...)">
+        <button onclick="login()">Войти</button>
     </div>
 
     <div id="chat-screen">
         <div id="messages"></div>
         <div class="input-area">
-            <label for="fileInput" style="cursor:pointer; font-size: 20px;">📎</label>
-            <input type="file" id="fileInput" accept="image/*">
-            <input id="msgInput" type="text" placeholder="Напишите сообщение...">
-            <button onclick="sendMessage()" style="background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer;">📎</button>
+            <input id="msgInput" type="text" placeholder="Сообщение...">
+            <button onclick="sendMessage()" style="border:none; background:none; font-size:20px; cursor:pointer;">➡️</button>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io(); 
+        const socket = io(); // Пустые скобки - это правильно для Render!
         let currentUser = "";
-        let currentRoom = ""; // Переменная для хранения текущей группы
+        let currentRoom = "";
 
         function login() {
             const name = document.getElementById('userNameInput').value;
             const room = document.getElementById('roomNameInput').value;
-
             if (name.trim() && room.trim()) {
                 currentUser = name;
                 currentRoom = room;
-
-                // Сообщаем серверу, что мы входим в конкретную комнату
                 socket.emit('join room', { user: currentUser, room: currentRoom });
-
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('chat-screen').style.display = 'flex';
-            } else {
-                alert("Пожалуйста, введите имя и название группы");
             }
         }
 
-        function displayMessage(msg) {
-            const messagesDiv = document.getElementById('messages');
-            const container = document.createElement('div');
-            container.className = 'msg-container';
-            
-            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.user)}&background=random`;
-            
-            container.innerHTML = `
-                <img src="${avatarUrl}" class="avatar">
-                <div class="msg-content">
-                    <span class="user-name">${msg.user}</span>
-                    ${msg.text ? `<div>${msg.text}</div>` : ''}
-                    ${msg.image ? `<img src="${msg.image}">` : ''}
-                </div>
-            `;
-            
-            messagesDiv.appendChild(container);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        socket.on('chat history', (history) => {
-            document.getElementById('messages').innerHTML = ''; 
-            history.forEach(msg => displayMessage(msg));
-        });
-
-        socket.on('chat message', (msg) => {
-            displayMessage(msg);
-        });
-
         function sendMessage() {
             const input = document.getElementById('msgInput');
-            const fileInput = document.getElementById('fileInput');
-
             if (input.value.trim()) {
                 socket.emit('chat message', { 
                     user: currentUser, 
-                    room: currentRoom, // Передаем комнату
+                    room: currentRoom, 
                     text: input.value 
                 });
                 input.value = '';
             }
-
-            if (fileInput.files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    socket.emit('chat message', { 
-                        user: currentUser, 
-                        room: currentRoom, // Передаем комнату
-                        image: e.target.result 
-                    });
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-                fileInput.value = '';
-            }
         }
 
-        document.getElementById('msgInput').addEventListener('keypress', function (e) {
+        socket.on('chat message', (msg) => {
+            const messagesDiv = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = 'msg';
+            div.innerHTML = `<span class="u-name">${msg.user}</span>${msg.text}`;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+
+        socket.on('chat history', (history) => {
+            document.getElementById('messages').innerHTML = '';
+            history.forEach(msg => {
+                const messagesDiv = document.getElementById('messages');
+                const div = document.createElement('div');
+                div.className = 'msg';
+                div.innerHTML = `<span class="u-name">${msg.user}</span>${msg.text}`;
+                messagesDiv.appendChild(div);
+            });
+        });
+
+        document.getElementById('msgInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
     </script>
