@@ -16,13 +16,13 @@
         
         /* Окно входа */
         #auth-screen { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        #auth-screen input { padding: 12px; width: 250px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; display: block; }
-        #auth-screen button { background: #0084ff; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #auth-screen h2 { margin-top: 0; color: #333; }
+        #auth-screen input { padding: 12px; width: 250px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; display: block; font-size: 16px; }
+        #auth-screen button { background: #0084ff; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
 
         /* Окно чата */
         #chat-screen { display: none; background: white; width: 100%; max-width: 500px; height: 100%; max-height: 700px; flex-direction: column; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
         
-        /* Адаптация под мобильные устройства */
         @media (max-width: 600px) {
             #chat-screen { border-radius: 0; max-height: 100vh; }
         }
@@ -36,16 +36,17 @@
         .msg-content img { max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; }
 
         .input-area { padding: 15px; display: flex; gap: 10px; background: white; border-top: 1px solid #eee; align-items: center; }
-        .input-area input[type="text"] { flex-grow: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; outline: none; }
+        .input-area input[type="text"] { flex-grow: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-size: 16px; }
         #fileInput { display: none; }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
-        <h2>Как вас зовут?</h2>
+        <h2>Алмаз</h2>
         <input type="text" id="userNameInput" placeholder="Ваше имя...">
-        <button onclick="login()">Войти в Алмаз</button>
+        <input type="text" id="roomNameInput" placeholder="Название группы...">
+        <button onclick="login()">Войти в группу</button>
     </div>
 
     <div id="chat-screen">
@@ -54,7 +55,7 @@
             <label for="fileInput" style="cursor:pointer; font-size: 20px;">📎</label>
             <input type="file" id="fileInput" accept="image/*">
             <input id="msgInput" type="text" placeholder="Напишите сообщение...">
-            <button onclick="sendMessage()" style="background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer;">Отправить</button>
+            <button onclick="sendMessage()" style="background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer;">📎</button>
         </div>
     </div>
 
@@ -62,15 +63,23 @@
     <script>
         const socket = io(); 
         let currentUser = "";
+        let currentRoom = ""; // Переменная для хранения текущей группы
 
         function login() {
             const name = document.getElementById('userNameInput').value;
-            if (name.trim()) {
+            const room = document.getElementById('roomNameInput').value;
+
+            if (name.trim() && room.trim()) {
                 currentUser = name;
+                currentRoom = room;
+
+                // Сообщаем серверу, что мы входим в конкретную комнату
+                socket.emit('join room', { user: currentUser, room: currentRoom });
+
                 document.getElementById('auth-screen').style.display = 'none';
                 document.getElementById('chat-screen').style.display = 'flex';
-                const messagesDiv = document.getElementById('messages');
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } else {
+                alert("Пожалуйста, введите имя и название группы");
             }
         }
 
@@ -110,6 +119,7 @@
             if (input.value.trim()) {
                 socket.emit('chat message', { 
                     user: currentUser, 
+                    room: currentRoom, // Передаем комнату
                     text: input.value 
                 });
                 input.value = '';
@@ -120,6 +130,7 @@
                 reader.onload = function(e) {
                     socket.emit('chat message', { 
                         user: currentUser, 
+                        room: currentRoom, // Передаем комнату
                         image: e.target.result 
                     });
                 };
