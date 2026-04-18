@@ -1,81 +1,79 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io({
-        reconnection: true,            // Включаем авто-переподключение
-        reconnectionAttempts: 10,      // Пробовать 10 раз
-        reconnectionDelay: 1000        // Пауза 1 секунда между попытками
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000
     });
 
     let currentUser = "";
     let currentRoom = "";
 
-    // Функция входа
     function login() {
-        const name = document.getElementById('userNameInput').value;
-        const room = document.getElementById('roomNameInput').value;
-        if (name.trim() && room.trim()) {
-            currentUser = name;
-            currentRoom = room;
+        const nameInput = document.getElementById('userNameInput');
+        const roomInput = document.getElementById('roomNameInput');
+        
+        if (nameInput && roomInput && nameInput.value.trim() && roomInput.value.trim()) {
+            currentUser = nameInput.value;
+            currentRoom = roomInput.value;
             socket.emit('join room', { user: currentUser, room: currentRoom });
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('chat-screen').style.display = 'flex';
+            
+            if(document.getElementById('auth-screen')) document.getElementById('auth-screen').style.display = 'none';
+            if(document.getElementById('chat-screen')) document.getElementById('chat-screen').style.display = 'flex';
         }
     }
 
-    // Авто-переподключение при смене сети (Wi-Fi -> 4G)
     socket.on('connect', () => {
         console.log('Связь с Алмазом установлена');
         if (currentUser && currentRoom) {
-            // Если мы уже были залогинены, перезаходим в комнату автоматически
             socket.emit('join room', { user: currentUser, room: currentRoom });
         }
     });
 
-    // Если связь пропала, пробуем восстановить тихо
-    socket.on('disconnect', (reason) => {
-        console.log('Потеря связи: ' + reason);
-        if (reason === "io server disconnect") {
-            socket.connect();
-        }
-    });
-
-    // Отправка сообщения
     function sendMessage() {
-        const input = document.getElementById('msgInput');
-        if (input.value.trim() && socket.connected) {
+        const input = document.getElementById('msgInput') || document.getElementById('messageInput');
+        if (input && input.value.trim() && socket.connected) {
             socket.emit('chat message', { 
                 user: currentUser, 
                 room: currentRoom, 
                 text: input.value 
             });
             input.value = '';
-        } else if (!socket.connected) {
-            alert('Нет связи с сервером. Подождите секунду...');
         }
     }
 
     socket.on('chat message', (msg) => {
         const messagesDiv = document.getElementById('messages');
-        const div = document.createElement('div');
-        div.className = 'msg';
-        div.innerHTML = `<span class="u-name">${msg.user}</span>${msg.text}`;
-        messagesDiv.appendChild(div);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-
-    socket.on('chat history', (history) => {
-        const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML = '';
-        history.forEach(msg => {
+        if(messagesDiv) {
             const div = document.createElement('div');
             div.className = 'msg';
             div.innerHTML = `<span class="u-name">${msg.user}</span>${msg.text}`;
             messagesDiv.appendChild(div);
-        });
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
     });
 
-    document.getElementById('msgInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
+    socket.on('chat history', (history) => {
+        const messagesDiv = document.getElementById('messages');
+        if(messagesDiv) {
+            messagesDiv.innerHTML = '';
+            history.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'msg';
+                div.innerHTML = `<span class="u-name">${msg.user}</span>${msg.text}`;
+                messagesDiv.appendChild(div);
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    });
+
+    // Безопасное ожидание загрузки DOM
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('msgInput') || document.getElementById('messageInput');
+        if (input) {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        }
     });
 </script>
