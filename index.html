@@ -1,99 +1,81 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Алмаз</title>
-    
-    <link rel="apple-touch-icon" href="logo.png">
-    <link rel="icon" type="image/png" href="logo.png">
-    <meta name="mobile-web-app-capable" content="yes">
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io({
+        reconnection: true,            // Включаем авто-переподключение
+        reconnectionAttempts: 10,      // Пробовать 10 раз
+        reconnectionDelay: 1000        // Пауза 1 секунда между попытками
+    });
 
-    <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #auth-screen { background: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 280px; }
-        #auth-screen input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        #auth-screen button { width: 100%; padding: 12px; background: #0084ff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        
-        #chat-screen { display: none; background: white; width: 100%; max-width: 500px; height: 100%; flex-direction: column; }
-        #messages { flex-grow: 1; overflow-y: auto; padding: 15px; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: white; padding: 8px 12px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 80%; }
-        .u-name { font-weight: bold; font-size: 0.7em; color: #0084ff; display: block; }
-        
-        .input-area { padding: 10px; display: flex; gap: 10px; border-top: 1px solid #eee; }
-        .input-area input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
-    </style>
-</head>
-<body>
+    let currentUser = "";
+    let currentRoom = "";
 
-    <div id="auth-screen">
-        <h3>Вход в Алмаз</h3>
-        <input type="text" id="userNameInput" placeholder="Ваше имя">
-        <input type="text" id="roomNameInput" placeholder="Группа (Работа, Семья...)">
-        <button onclick="login()">Войти</button>
-    </div>
-
-    <div id="chat-screen">
-        <div id="messages"></div>
-        <div class="input-area">
-            <input id="msgInput" type="text" placeholder="Сообщение...">
-            <button onclick="sendMessage()" style="border:none; background:none; font-size:20px; cursor:pointer;">➡️</button>
-        </div>
-    </div>
-
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io(); // Пустые скобки - это правильно для Render!
-        let currentUser = "";
-        let currentRoom = "";
-
-        function login() {
-            const name = document.getElementById('userNameInput').value;
-            const room = document.getElementById('roomNameInput').value;
-            if (name.trim() && room.trim()) {
-                currentUser = name;
-                currentRoom = room;
-                socket.emit('join room', { user: currentUser, room: currentRoom });
-                document.getElementById('auth-screen').style.display = 'none';
-                document.getElementById('chat-screen').style.display = 'flex';
-            }
+    // Функция входа
+    function login() {
+        const name = document.getElementById('userNameInput').value;
+        const room = document.getElementById('roomNameInput').value;
+        if (name.trim() && room.trim()) {
+            currentUser = name;
+            currentRoom = room;
+            socket.emit('join room', { user: currentUser, room: currentRoom });
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'flex';
         }
+    }
 
-        function sendMessage() {
-            const input = document.getElementById('msgInput');
-            if (input.value.trim()) {
-                socket.emit('chat message', { 
-                    user: currentUser, 
-                    room: currentRoom, 
-                    text: input.value 
-                });
-                input.value = '';
-            }
+    // Авто-переподключение при смене сети (Wi-Fi -> 4G)
+    socket.on('connect', () => {
+        console.log('Связь с Алмазом установлена');
+        if (currentUser && currentRoom) {
+            // Если мы уже были залогинены, перезаходим в комнату автоматически
+            socket.emit('join room', { user: currentUser, room: currentRoom });
         }
+    });
 
-        socket.on('chat message', (msg) => {
-            const messagesDiv = document.getElementById('messages');
+    // Если связь пропала, пробуем восстановить тихо
+    socket.on('disconnect', (reason) => {
+        console.log('Потеря связи: ' + reason);
+        if (reason === "io server disconnect") {
+            socket.connect();
+        }
+    });
+
+    // Отправка сообщения
+    function sendMessage() {
+        const input = document.getElementById('msgInput');
+        if (input.value.trim() && socket.connected) {
+            socket.emit('chat message', { 
+                user: currentUser, 
+                room: currentRoom, 
+                text: input.value 
+            });
+            input.value = '';
+        } else if (!socket.connected) {
+            alert('Нет связи с сервером. Подождите секунду...');
+        }
+    }
+
+    socket.on('chat message', (msg) => {
+        const messagesDiv = document.getElementById('messages');
+        const div = document.createElement('div');
+        div.className = 'msg';
+        div.innerHTML = `<span class="u-name">${msg.user}</span>${msg.text}`;
+        messagesDiv.appendChild(div);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    socket.on('chat history', (history) => {
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML = '';
+        history.forEach(msg => {
             const div = document.createElement('div');
             div.className = 'msg';
             div.innerHTML = `<span class="u-name">${msg.user}</span>${msg.text}`;
             messagesDiv.appendChild(div);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
 
-        socket.on('chat history', (history) => {
-            document.getElementById('messages').innerHTML = '';
-            history.forEach(msg => {
-                const messagesDiv = document.getElementById('messages');
-                const div = document.createElement('div');
-                div.className = 'msg';
-                div.innerHTML = `<span class="u-name">${msg.user}</span>${msg.text}`;
-                messagesDiv.appendChild(div);
-            });
-        });
-
-        document.getElementById('msgInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-    </script>
-</body>
-</html>
+    document.getElementById('msgInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+</script>
