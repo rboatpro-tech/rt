@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мессенджер с авторизацией</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        
+        /* Окно входа */
+        #auth-screen { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        #auth-screen input { padding: 12px; width: 250px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; display: block; }
+        #auth-screen button { background: #0084ff; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* Окно чата */
+        #chat-screen { display: none; background: white; width: 500px; height: 700px; flex-direction: column; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        #messages { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; background: #f9f9f9; }
+        
+        .msg-container { display: flex; gap: 10px; align-items: flex-start; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; }
+        .msg-content { background: white; padding: 10px 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); max-width: 70%; }
+        .user-name { font-weight: bold; font-size: 0.8em; color: #555; margin-bottom: 4px; display: block; }
+        .msg-content img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+
+        .input-area { padding: 20px; display: flex; gap: 10px; background: white; border-top: 1px solid #eee; }
+        .input-area input[type="text"] { flex-grow: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; outline: none; }
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen">
+        <h2>Как вас зовут?</h2>
+        <input type="text" id="userNameInput" placeholder="Ваше имя...">
+        <button onclick="login()">Войти в чат</button>
+    </div>
+
+    <div id="chat-screen">
+        <div id="messages"></div>
+        <div class="input-area">
+            <label for="fileInput" style="cursor:pointer; font-size: 20px;">📎</label>
+            <input type="file" id="fileInput" accept="image/*">
+            <input id="msgInput" type="text" placeholder="Напишите сообщение...">
+            <button onclick="sendMessage()" style="background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer;">Отправить</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io('http://192.168.0.201:3000');
+        let currentUser = "";
+
+        function login() {
+            const name = document.getElementById('userNameInput').value;
+            if (name.trim()) {
+                currentUser = name;
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('chat-screen').style.display = 'flex';
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('msgInput');
+            const fileInput = document.getElementById('fileInput');
+
+            if (input.value) {
+                socket.emit('chat message', { 
+                    user: currentUser, 
+                    type: 'text', 
+                    data: input.value,
+                    avatar: `https://ui-avatars.com/api/?name=${currentUser}&background=random`
+                });
+                input.value = '';
+            }
+
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    socket.emit('chat message', { 
+                        user: currentUser, 
+                        type: 'image', 
+                        data: e.target.result,
+                        avatar: `https://ui-avatars.com/api/?name=${currentUser}&background=random`
+                    });
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+                fileInput.value = '';
+            }
+        }
+
+        socket.on('chat message', (msg) => {
+            const messagesDiv = document.getElementById('messages');
+            const container = document.createElement('div');
+            container.className = 'msg-container';
+            
+            container.innerHTML = `
+                <img src="${msg.avatar}" class="avatar">
+                <div class="msg-content">
+                    <span class="user-name">${msg.user}</span>
+                    ${msg.type === 'text' ? msg.data : `<img src="${msg.data}">`}
+                </div>
+            `;
+            
+            messagesDiv.appendChild(container);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+    </script>
+</body>
+</html>
