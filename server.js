@@ -5,7 +5,7 @@ const io = require('socket.io')(http, {
     maxHttpBufferSize: 1e7 // Увеличиваем лимит до 10 Мб
 });
 
-// Обслуживаем статические файлы (картинки, стили) из папки www, если они там есть
+// Обслуживаем статические файлы
 app.use(express.static(__dirname + '/www'));
 
 app.get('/', (req, res) => {
@@ -13,13 +13,17 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+    console.log('Новое подключение');
     socket.on('chat message', (msg) => {
         io.emit('chat message', msg);
     });
 });
 
-// ИСПРАВЛЕНИЕ ТУТ: Добавляем '0.0.0.0'
-http.listen(3000, '0.0.0.0', () => {
-    console.log('Сервер доступен в сети по адресу: http://192.168.0.201:3000');
-    console.log('Для локальной проверки: http://localhost:3000');
+// ИСПРАВЛЕНИЕ ДЛЯ RENDER:
+// process.env.PORT — это специальная переменная, которую Render подставит сам.
+const PORT = process.env.PORT || 3000;
+
+http.listen(PORT, '0.0.0.0', () => {
+    console.log(`Сервер мессенджера RiverBoat запущен!`);
+    console.log(`Порт: ${PORT}`);
 });
