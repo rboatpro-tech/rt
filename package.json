@@ -1,19 +1,15 @@
 {
-  "name": "my-messenger",
+  "name": "almaz-messenger",
   "version": "1.0.0",
-  "description": "",
+  "description": "Мессенджер Алмаз с группами и MongoDB",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "npm install"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
     "mongoose": "^8.0.0"
   }
 }
